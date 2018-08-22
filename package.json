@@ -1,0 +1,66 @@
+{
+  "name": "passport-magic-link",
+  "version": "0.1.0",
+  "description": "Passport JS module for Magic Link authentication",
+  "main": "index.js",
+  "scripts": {
+    "build": "babel src -d lib",
+    "dev": "jest --watch",
+    "precommit": "lint-staged",
+    "test": "jest | coveralls"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "git add",
+      "jest --bail --findRelatedTests"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vinialbano/passport-magic-link.git"
+  },
+  "keywords": [
+    "passport",
+    "magic",
+    "link",
+    "passwordless",
+    "encryption",
+    "timestamp",
+    "two",
+    "factor",
+    "authentication",
+    "2FA"
+  ],
+  "author": "Vinicius Albano <vinialbano@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/vinialbano/passport-magic-link/issues"
+  },
+  "homepage": "https://github.com/vinialbano/passport-magic-link#readme",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-env": "^1.7.0",
+    "coveralls": "^3.0.2",
+    "eslint": "^5.4.0",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-jest": "^21.21.0",
+    "eslint-plugin-node": "^7.0.1",
+    "eslint-plugin-promise": "^4.0.0",
+    "eslint-plugin-standard": "^3.1.0",
+    "husky": "^0.14.3",
+    "jest": "^23.5.0",
+    "lint-staged": "^7.2.2"
+  },
+  "jest": {
+    "clearMocks": true,
+    "coverageDirectory": "./coverage/",
+    "collectCoverage": true
+  },
+  "dependencies": {
+    "babel-polyfill": "^6.26.0"
+  }
+}
