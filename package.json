@@ -7,7 +7,8 @@
     "build": "babel src -d lib",
     "dev": "jest --watch",
     "precommit": "lint-staged",
-    "test": "jest | coveralls"
+    "test": "jest",
+    "coverage": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
   },
   "lint-staged": {
     "*.js": [
@@ -43,6 +44,8 @@
     "babel-core": "^6.26.3",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.7.0",
+    "chai": "^4.1.2",
+    "chai-passport-strategy": "^1.0.1",
     "coveralls": "^3.0.2",
     "eslint": "^5.4.0",
     "eslint-config-standard": "^11.0.0",
@@ -58,9 +61,12 @@
   "jest": {
     "clearMocks": true,
     "coverageDirectory": "./coverage/",
-    "collectCoverage": true
+    "collectCoverage": true,
+    "coverageReporters": ["lcov"]
   },
   "dependencies": {
-    "babel-polyfill": "^6.26.0"
+    "babel-polyfill": "^6.26.0",
+    "jsonwebtoken": "^8.3.0",
+    "passport-strategy": "^1.0.0"
   }
 }
