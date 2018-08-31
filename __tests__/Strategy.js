@@ -102,6 +102,41 @@ describe('Strategy', () => {
     })
 
     describe('when the user is verified before the token is sent', () => {
+      test('calls error when the token creation fails', (done) => {
+        const signMock = jest.spyOn(jwt, 'sign')
+        signMock.mockImplementation((payload, secretOrPrivateKey, options, callback) => {
+          callback(new Error('Token sign error'))
+        })
+
+        const sendToken = () => {}
+        const verifyUser = jest.fn(() => Promise.resolve({email: 'john@doe.com'}))
+
+        const strategy = new Strategy(
+          {
+            secret: 'top-secret',
+            userFields: ['email'],
+            tokenField: 'token'
+          },
+          sendToken,
+          verifyUser)
+
+        testPassport
+          .use(strategy)
+          .req(req => {
+            req.query = {
+              email: 'john@doe.com'
+            }
+          })
+          .error(result => {
+            expect(result.message).toBe('Token sign error')
+            signMock.mockRestore()
+            done()
+          })
+          .authenticate({action: 'requestToken'})
+
+        expect(verifyUser).toHaveBeenCalledWith({email: 'john@doe.com'})
+      })
+
       test('fails when the verifyUser function rejects', (done) => {
         const sendToken = () => {}
         const verifyUser = () => Promise.reject(new Error('No user found'))
@@ -158,39 +193,174 @@ describe('Strategy', () => {
         expect(verifyUser).toHaveBeenCalledWith({email: 'john@doe.com'})
       })
 
-      test('calls error when the token creation fails', (done) => {
-        const signMock = jest.spyOn(jwt, 'sign')
-        signMock.mockImplementation((payload, secretOrPrivateKey, options, callback) => {
-          callback(new Error('Token sign error'))
+      describe('when the passReqToCallbacks option is true', () => {
+        test('calls error when the sendToken function rejects', (done) => {
+          const signMock = jest.spyOn(jwt, 'sign')
+          signMock.mockImplementation((payload, secretOrPrivateKey, options, callback) => {
+            callback(null, '123456')
+          })
+
+          const sendToken = jest.fn((user, token) => Promise.reject(new Error('Token send error')))
+          const verifyUser = jest.fn(() => Promise.resolve({
+            name: 'John Doe',
+            email: 'john@doe.com'
+          }))
+
+          const strategy = new Strategy(
+            {
+              secret: 'top-secret',
+              userFields: ['email', 'name'],
+              tokenField: 'token',
+              passReqToCallbacks: true
+            },
+            sendToken,
+            verifyUser)
+
+          testPassport
+            .use(strategy)
+            .req(req => {
+              req.query = {
+                name: 'John Doe',
+                email: 'john@doe.com'
+              }
+            })
+            .error(result => {
+              expect(result.message).toBe('Token send error')
+              expect(sendToken).toHaveBeenCalledWith(
+                {
+                  headers: {},
+                  method: 'GET',
+                  url: '/',
+                  query: {
+                    name: 'John Doe',
+                    email: 'john@doe.com'
+                  }
+                },
+                {
+                  name: 'John Doe',
+                  email: 'john@doe.com'
+                }, '123456')
+              signMock.mockRestore()
+              done()
+            })
+            .authenticate({action: 'requestToken'})
+
+          expect(verifyUser).toHaveBeenCalledWith({
+            headers: {},
+            method: 'GET',
+            query: {
+              email: 'john@doe.com',
+              name: 'John Doe'
+            },
+            url: '/'
+          }, {name: 'John Doe', email: 'john@doe.com'})
         })
 
-        const sendToken = () => {}
-        const verifyUser = jest.fn(() => Promise.resolve({email: 'john@doe.com'}))
-
-        const strategy = new Strategy(
-          {
-            secret: 'top-secret',
-            userFields: ['email'],
-            tokenField: 'token'
-          },
-          sendToken,
-          verifyUser)
-
-        testPassport
-          .use(strategy)
-          .req(req => {
-            req.query = {
-              email: 'john@doe.com'
-            }
+        test('pass with success message', (done) => {
+          const signMock = jest.spyOn(jwt, 'sign')
+          signMock.mockImplementation((payload, secretOrPrivateKey, options, callback) => {
+            callback(null, '123456')
           })
-          .error(result => {
-            expect(result.message).toBe('Token sign error')
-            signMock.mockRestore()
-            done()
-          })
-          .authenticate({action: 'requestToken'})
 
-        expect(verifyUser).toHaveBeenCalledWith({email: 'john@doe.com'})
+          const sendToken = jest.fn((user, token) => Promise.resolve())
+          const verifyUser = jest.fn(() => Promise.resolve({
+            name: 'John Doe',
+            email: 'john@doe.com'
+          }))
+
+          const strategy = new Strategy(
+            {
+              secret: 'top-secret',
+              userFields: ['email', 'name'],
+              tokenField: 'token',
+              passReqToCallbacks: true
+            },
+            sendToken,
+            verifyUser)
+
+          testPassport
+            .use(strategy)
+            .req(req => {
+              req.query = {
+                name: 'John Doe',
+                email: 'john@doe.com'
+              }
+            })
+            .pass(result => {
+              expect(result.message).toBe('Token succesfully delivered')
+              expect(sendToken).toHaveBeenCalledWith(
+                {
+                  headers: {},
+                  method: 'GET',
+                  url: '/',
+                  query: {
+                    name: 'John Doe',
+                    email: 'john@doe.com'
+                  }
+                }, {
+                  name: 'John Doe',
+                  email: 'john@doe.com'
+                }, '123456')
+              signMock.mockRestore()
+              done()
+            })
+            .authenticate({action: 'requestToken'})
+
+          expect(verifyUser).toHaveBeenCalledWith({
+            headers: {},
+            method: 'GET',
+            query: {
+              email: 'john@doe.com',
+              name: 'John Doe'
+            },
+            url: '/'
+          }, {name: 'John Doe', email: 'john@doe.com'})
+        })
+      })
+
+      describe('when the passReqToCallbacks option is false', () => {
+        test('pass with success message', (done) => {
+          const signMock = jest.spyOn(jwt, 'sign')
+          signMock.mockImplementation((payload, secretOrPrivateKey, options, callback) => {
+            callback(null, '123456')
+          })
+
+          const sendToken = jest.fn((user, token) => Promise.resolve())
+          const verifyUser = jest.fn(() => Promise.resolve({
+            name: 'John Doe',
+            email: 'john@doe.com'
+          }))
+
+          const strategy = new Strategy(
+            {
+              secret: 'top-secret',
+              userFields: ['email', 'name'],
+              tokenField: 'token'
+            },
+            sendToken,
+            verifyUser)
+
+          testPassport
+            .use(strategy)
+            .req(req => {
+              req.query = {
+                name: 'John Doe',
+                email: 'john@doe.com'
+              }
+            })
+            .pass(result => {
+              expect(result.message).toBe('Token succesfully delivered')
+              expect(sendToken).toHaveBeenCalledWith({
+                name: 'John Doe',
+                email: 'john@doe.com'
+              }, '123456')
+              signMock.mockRestore()
+              done()
+            })
+            .authenticate({action: 'requestToken'})
+
+          expect(verifyUser).toHaveBeenCalledWith({name: 'John Doe', email: 'john@doe.com'})
+        })
       })
     })
 
@@ -228,150 +398,80 @@ describe('Strategy', () => {
           })
           .authenticate({action: 'requestToken'})
       })
-    })
 
-    describe('when the passReqToCallbacks option is false', () => {
-      test('pass with success message', (done) => {
-        const signMock = jest.spyOn(jwt, 'sign')
-        signMock.mockImplementation((payload, secretOrPrivateKey, options, callback) => {
-          callback(null, '123456')
-        })
-
-        const sendToken = jest.fn((user, token) => Promise.resolve())
-        const verifyUser = jest.fn(() => Promise.resolve({
-          name: 'John Doe',
-          email: 'john@doe.com'
-        }))
-
-        const strategy = new Strategy(
-          {
-            secret: 'top-secret',
-            userFields: ['email', 'name'],
-            tokenField: 'token'
-          },
-          sendToken,
-          verifyUser)
-
-        testPassport
-          .use(strategy)
-          .req(req => {
-            req.query = {
-              name: 'John Doe',
-              email: 'john@doe.com'
-            }
+      describe('when the passReqToCallbacks option is false', () => {
+        test('pass with success message', (done) => {
+          const signMock = jest.spyOn(jwt, 'sign')
+          signMock.mockImplementation((payload, secretOrPrivateKey, options, callback) => {
+            callback(null, '123456')
           })
-          .pass(result => {
-            expect(result.message).toBe('Token succesfully delivered')
-            expect(sendToken).toHaveBeenCalledWith({
-              name: 'John Doe',
-              email: 'john@doe.com'
-            }, '123456')
-            signMock.mockRestore()
-            done()
-          })
-          .authenticate({action: 'requestToken'})
 
-        expect(verifyUser).toHaveBeenCalledWith({name: 'John Doe', email: 'john@doe.com'})
-      })
-    })
+          const sendToken = jest.fn((user, token) => Promise.resolve())
+          const verifyUser = () => {}
 
-    describe('when the passReqToCallbacks option is true', () => {
-      test('calls error when the sendToken function rejects', (done) => {
-        const signMock = jest.spyOn(jwt, 'sign')
-        signMock.mockImplementation((payload, secretOrPrivateKey, options, callback) => {
-          callback(null, '123456')
-        })
+          const strategy = new Strategy(
+            {
+              secret: 'top-secret',
+              userFields: ['email', 'name'],
+              tokenField: 'token',
+              verifyUserAfterToken: true
+            },
+            sendToken,
+            verifyUser)
 
-        const sendToken = jest.fn((user, token) => Promise.reject(new Error('Token send error')))
-        const verifyUser = jest.fn(() => Promise.resolve({
-          name: 'John Doe',
-          email: 'john@doe.com'
-        }))
-
-        const strategy = new Strategy(
-          {
-            secret: 'top-secret',
-            userFields: ['email', 'name'],
-            tokenField: 'token',
-            passReqToCallbacks: true
-          },
-          sendToken,
-          verifyUser)
-
-        testPassport
-          .use(strategy)
-          .req(req => {
-            req.query = {
-              name: 'John Doe',
-              email: 'john@doe.com'
-            }
-          })
-          .error(result => {
-            expect(result.message).toBe('Token send error')
-            expect(sendToken).toHaveBeenCalledWith(
-              {
-                headers: {},
-                method: 'GET',
-                url: '/',
-                query: {
-                  name: 'John Doe',
-                  email: 'john@doe.com'
-                }
-              },
-              {
-                name: 'John Doe',
-                email: 'john@doe.com'
+          testPassport
+            .use(strategy)
+            .req(req => {
+              req.query = {
+                email: 'john@doe.com',
+                name: 'John Doe'
+              }
+            })
+            .pass(result => {
+              expect(result.message).toBe('Token succesfully delivered')
+              expect(sendToken).toHaveBeenCalledWith({
+                email: 'john@doe.com',
+                name: 'John Doe'
               }, '123456')
-            signMock.mockRestore()
-            done()
-          })
-          .authenticate({action: 'requestToken'})
-
-        expect(verifyUser).toHaveBeenCalledWith({
-          headers: {},
-          method: 'GET',
-          query: {
-            email: 'john@doe.com',
-            name: 'John Doe'
-          },
-          url: '/'
-        }, {name: 'John Doe', email: 'john@doe.com'})
+              signMock.mockRestore()
+              done()
+            })
+            .authenticate({action: 'requestToken'})
+        })
       })
 
-      test('pass with success message', (done) => {
-        const signMock = jest.spyOn(jwt, 'sign')
-        signMock.mockImplementation((payload, secretOrPrivateKey, options, callback) => {
-          callback(null, '123456')
-        })
-
-        const sendToken = jest.fn((user, token) => Promise.resolve())
-        const verifyUser = jest.fn(() => Promise.resolve({
-          name: 'John Doe',
-          email: 'john@doe.com'
-        }))
-
-        const strategy = new Strategy(
-          {
-            secret: 'top-secret',
-            userFields: ['email', 'name'],
-            tokenField: 'token',
-            passReqToCallbacks: true
-          },
-          sendToken,
-          verifyUser)
-
-        testPassport
-          .use(strategy)
-          .req(req => {
-            req.query = {
-              name: 'John Doe',
-              email: 'john@doe.com'
-            }
+      describe('when the passReqToCallbacks option is true', () => {
+        test('pass with success message', (done) => {
+          const signMock = jest.spyOn(jwt, 'sign')
+          signMock.mockImplementation((payload, secretOrPrivateKey, options, callback) => {
+            callback(null, '123456')
           })
-          .pass(result => {
-            expect(result.message).toBe('Token succesfully delivered')
-            expect(sendToken).toHaveBeenCalledWith(
-              {
+
+          const sendToken = jest.fn((user, token) => Promise.resolve())
+          const verifyUser = () => {}
+
+          const strategy = new Strategy(
+            {
+              secret: 'top-secret',
+              userFields: ['email', 'name'],
+              tokenField: 'token',
+              verifyUserAfterToken: true,
+              passReqToCallbacks: true
+            },
+            sendToken,
+            verifyUser)
+
+          testPassport
+            .use(strategy)
+            .req(req => {
+              req.query = {
+                email: 'john@doe.com',
+                name: 'John Doe'
+              }
+            })
+            .pass(result => {
+              expect(result.message).toBe('Token succesfully delivered')
+              expect(sendToken).toHaveBeenCalledWith({
                 headers: {},
                 method: 'GET',
                 url: '/',
@@ -380,23 +480,14 @@ describe('Strategy', () => {
                   email: 'john@doe.com'
                 }
               }, {
-                name: 'John Doe',
-                email: 'john@doe.com'
+                email: 'john@doe.com',
+                name: 'John Doe'
               }, '123456')
-            signMock.mockRestore()
-            done()
-          })
-          .authenticate({action: 'requestToken'})
-
-        expect(verifyUser).toHaveBeenCalledWith({
-          headers: {},
-          method: 'GET',
-          query: {
-            email: 'john@doe.com',
-            name: 'John Doe'
-          },
-          url: '/'
-        }, {name: 'John Doe', email: 'john@doe.com'})
+              signMock.mockRestore()
+              done()
+            })
+            .authenticate({action: 'requestToken'})
+        })
       })
     })
   })

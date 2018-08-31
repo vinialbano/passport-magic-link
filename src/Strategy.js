@@ -102,6 +102,8 @@ class MagicLinkStrategy extends PassportStrategy {
           400
         )
       }
+    } else {
+      user = userFields
     }
 
     // Generate JWT
@@ -109,7 +111,7 @@ class MagicLinkStrategy extends PassportStrategy {
     let token
     try {
       token = await createToken(
-        {user: user || userFields, iat: Math.floor(Date.now() / 1000)},
+        {user: user, iat: Math.floor(Date.now() / 1000)},
         this.secret,
         {expiresIn: this.ttl}
       )
