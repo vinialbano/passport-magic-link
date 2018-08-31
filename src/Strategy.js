@@ -1,39 +1,47 @@
 const PassportStrategy = require('passport-strategy')
 const jwt = require('jsonwebtoken')
 const {promisify} = require('util')
+const lookup = require('./lookup')
 
 class MagicLinkStrategy extends PassportStrategy {
   /**
    * @param {string} secret - The secret to sign the token
+   * @param {Array} userFields - An array of mandatory user fields from the request
+   * @param {Array} tokenField - The token field from the request
    * @param {Number} ttl - Time to live
-   * @param {Boolean} passReqToCallback - Whether the req should be passed do the sendToken callback
-   * @param {Function} verifyUser - A function to verify the user
+   * @param {Boolean} passReqToCallbacks - Whether the req should be passed do the sendToken callback
+   * @param {Boolean} verifyUserAfterToken - Whether the user should be verified after the token verification
    * @param {Function} sendToken - A function to deliver the token
-   * @param {Function} verifyToken - A function to verify the token
+   * @param {Function} verifyUser - A function to verify the user
    */
   constructor (
     {
       secret,
+      userFields,
+      tokenField,
       ttl = 60 * 10, // default: 10 minutes
-      passReqToCallback = false
+      passReqToCallbacks = false,
+      verifyUserAfterToken = false
     },
-    verifyUser,
     sendToken,
-    verifyToken
+    verifyUser
   ) {
     if (!secret) throw new Error('Magic Link authentication strategy requires an encryption secret')
-    if (!verifyUser) throw new Error('Magic Link authentication strategy requires a verifyUser function')
+    if (!userFields || !userFields.length) throw new Error('Magic Link authentication strategy requires an array of mandatory user fields')
+    if (!tokenField) throw new Error('Magic Link authentication strategy requires a token field')
     if (!sendToken) throw new Error('Magic Link authentication strategy requires a sendToken function')
-    if (!verifyToken) throw new Error('Magic Link authentication strategy requires a verifyToken function')
+    if (!verifyUser) throw new Error('Magic Link authentication strategy requires a verifyUser function')
     super()
 
     this.name = 'magiclink'
     this.secret = secret
     this.ttl = ttl
-    this.passReqToCallback = passReqToCallback
-    this.verifyUser = verifyUser
+    this.passReqToCallbacks = passReqToCallbacks
+    this.verifyUserAfterToken = verifyUserAfterToken
+    this.userFields = userFields
+    this.tokenField = tokenField
     this.sendToken = sendToken
-    this.verifyToken = verifyToken
+    this.verifyUser = verifyUser
   }
 
   async authenticate (req, options = {}) {
@@ -58,19 +66,42 @@ class MagicLinkStrategy extends PassportStrategy {
   }
 
   async requestToken (req, options) {
+    let userFields = {}
     let user
-    try {
-      // Verify user
-      user = await this.verifyUser(req)
-    } catch (err) {
-      return this.fail(err)
+
+    for (let i = 0; i < this.userFields.length; i++) {
+      const fieldValue = options.allowPost
+        ? lookup(req.body, this.userFields[i]) || lookup(req.query, this.userFields[i])
+        : lookup(req.query, this.userFields[i])
+      if (!fieldValue) {
+        userFields = null
+        break
+      }
+      userFields[this.userFields[i]] = fieldValue
     }
 
-    if (!user) {
-      return this.fail(
-        new Error(options.authMessage || `No user found`),
-        400
-      )
+    if (!userFields) {
+      return this.fail(new Error('Mandatory user fields missing'))
+    }
+
+    if (!this.verifyUserAfterToken) {
+      try {
+        // Verify user
+        if (this.passReqToCallbacks) {
+          user = await this.verifyUser(req, userFields)
+        } else {
+          user = await this.verifyUser(userFields)
+        }
+      } catch (err) {
+        return this.fail(err)
+      }
+
+      if (!user) {
+        return this.fail(
+          new Error(options.authMessage || `No user found`),
+          400
+        )
+      }
     }
 
     // Generate JWT
@@ -78,7 +109,7 @@ class MagicLinkStrategy extends PassportStrategy {
     let token
     try {
       token = await createToken(
-        {user, iat: Math.floor(Date.now() / 1000)},
+        {user: user || userFields, iat: Math.floor(Date.now() / 1000)},
         this.secret,
         {expiresIn: this.ttl}
       )
@@ -88,7 +119,7 @@ class MagicLinkStrategy extends PassportStrategy {
 
     try {
       // Deliver JWT
-      if (this.passReqToCallback) {
+      if (this.passReqToCallbacks) {
         await this.sendToken(req, user, token)
       } else {
         await this.sendToken(user, token)
@@ -101,31 +132,50 @@ class MagicLinkStrategy extends PassportStrategy {
   }
 
   async acceptToken (req, options) {
-    let token
-    try {
-      // Get token
-      token = await this.verifyToken(req)
-    } catch (err) {
-      return this.fail(err)
-    }
+    const token = options.allowPost
+      ? lookup(req.body, this.tokenField) || lookup(req.query, this.tokenField)
+      : lookup(req.query, this.tokenField)
+
     if (!token) {
-      return this.pass({message: `No token found`})
+      return this.pass({message: 'Token missing'})
     }
 
+    let user
     try {
       // Verify token
       const verifyToken = promisify(jwt.verify)
-      const {user} = await verifyToken(
+      let {user: tokenUser} = await verifyToken(
         token,
         this.secret
       )
-
-      // Pass setting a passport user
-      // Next middleware can check req.user object
-      return this.success(user)
+      user = tokenUser
     } catch (err) {
       return this.error(err)
     }
+
+    if (this.verifyUserAfterToken) {
+      try {
+        // Verify user
+        if (this.passReqToCallbacks) {
+          user = await this.verifyUser(req, user)
+        } else {
+          user = await this.verifyUser(user)
+        }
+      } catch (err) {
+        return this.fail(err)
+      }
+
+      if (!user) {
+        return this.fail(
+          new Error(options.authMessage || `No user found`),
+          400
+        )
+      }
+    }
+
+    // Pass setting a passport user
+    // Next middleware can check req.user object
+    return this.success(user)
   }
 }
 
