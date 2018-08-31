@@ -16,36 +16,33 @@ Magic Link authentication for Passport JS
 
   * `options`: A javascript object containing some configuration:
     * `secret` Mandatory string, used to sign tokens
+    * `userFields`: An array of mandatory field names from the request query or body that are going to be used to create or retrieve the user.
+    * `tokenField`: The name of the field which contains the token in the request query or body.
     * `ttl`: Optional integer, defaults to 10 minutes (in seconds). It's used to set the token expiration
     * `passReqToCallback`: Optional boolean, defaults to false. If true, the request is passed to the `sendToken` function.
-  * `verifyUser`: A function that receives the request and returns a promise containing the user object. It may be used to insert and/or find the user in the database.
+    * `verifyUserAfterToken`: Optional boolean, defaults to false. If true, the request data is passed to the token and the user is verified after the token confirmation.
   * `sendToken`: A function that is used to deliver the token to the user. You may use an email service, SMS or whatever method you want. It receives the user object, the token and optionally the request. It returns a promise indicating whether the token has been sent or not.
-  * `verifyToken`: A function that receives the request and returns a promise containing the token object.
+  * `verifyUser`: A function that receives the request and returns a promise containing the user object. It may be used to insert and/or find the user in the database. It may be executed before the token creation or after the token confirmation.
 
   #### Example
-    
-    ```javascript
+   
+   ```javascript
     const MagicLinkStrategy = require('passport-magic-link').Strategy
     
     passport.use(new MagicLinkStrategy({
-       secret: 'my-secret'
-    }, (req) => {
-      if (req.body && req.body.email) {
-        return User.findOrCreate({email: req.body.email})
-      }
-      return null
+       secret: 'my-secret',
+       userFields: ['name', 'email'],
+       tokenField: 'token'
     }, (user, token) => {
        return MailService.sendMail({
         to: user.email,
         token
        })
-    }, (req) => {
-      if (req.query && req.query.token) {
-        return req.query.token
-      }
-      return null
+    }, (user) => {
+      return User.findOrCreate({email: user.email, name: user.name})
     }))
-    ```
+   ```
+   
   
   ### Authenticate Requests
   
@@ -58,7 +55,7 @@ Magic Link authentication for Passport JS
   app.post('/auth/magiclink',
       passport.use('magiclink', { action : 'requestToken' }),
       (req, res) => res.redirect('/check-your-inbox')
-    )
+  )
   ```
   
   #### accept token
