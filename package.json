@@ -3,6 +3,10 @@
   "version": "1.0.1",
   "description": "Passport JS module for Magic Link authentication",
   "main": "index.js",
+  "files": [
+    "/lib",
+    "index.js"
+  ],
   "scripts": {
     "build": "babel src -d lib",
     "dev": "jest --watch",

@@ -65,3 +65,6 @@ typings/
 
 # Wallaby JS
 wallaby.js
+
+# Build Specific
+lib

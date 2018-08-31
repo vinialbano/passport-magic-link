@@ -10,7 +10,7 @@ Magic Link authentication for Passport JS
   
 ## Usage
 
-  ### Configure Strategy
+### Configure Strategy
 
   The MagicLinkStrategy constructor receives four parameters:
 
@@ -24,7 +24,7 @@ Magic Link authentication for Passport JS
   * `sendToken`: A function that is used to deliver the token to the user. You may use an email service, SMS or whatever method you want. It receives the user object, the token and optionally the request. It returns a promise indicating whether the token has been sent or not.
   * `verifyUser`: A function that receives the request and returns a promise containing the user object. It may be used to insert and/or find the user in the database. It may be executed before the token creation or after the token confirmation.
 
-  #### Example
+#### Example
    
    ```javascript
     const MagicLinkStrategy = require('passport-magic-link').Strategy
@@ -44,11 +44,11 @@ Magic Link authentication for Passport JS
    ```
    
   
-  ### Authenticate Requests
+### Authenticate Requests
   
   Use `passport.authenticate()`, specifying the `'magiclink'` strategy for two actions:
   
-  #### request token
+#### request token
   In this situation the passport authenticate middleware will send a token produced by the user information, which is returned by the `verifyUser` function. The delivery system is not provided by default and must be placed in the `sendToken` function.
   
   ```javascript
@@ -58,7 +58,7 @@ Magic Link authentication for Passport JS
   )
   ```
   
-  #### accept token
+#### accept token
   In this situation (the default) the passport authenticate middleware will check for a token. The token value is returned by the `verifyToken` function.
   
   ```javascript
@@ -68,6 +68,6 @@ Magic Link authentication for Passport JS
   )
   ```
   
-  ## Acknowledgements
+## Acknowledgements
   
   This module is forked and modified from [Nick Balestra's Passport Zero](https://github.com/nickbalestra/zero)
