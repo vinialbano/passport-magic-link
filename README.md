@@ -53,7 +53,7 @@ Magic Link authentication for Passport JS
   
   ```javascript
   app.post('/auth/magiclink',
-      passport.use('magiclink', { action : 'requestToken' }),
+      passport.authenticate('magiclink', { action : 'requestToken' }),
       (req, res) => res.redirect('/check-your-inbox')
   )
   ```
@@ -63,7 +63,7 @@ Magic Link authentication for Passport JS
   
   ```javascript
   app.get('/auth/magiclink/callback',
-    passport.use('magiclink', { action : 'acceptToken' }),
+    passport.authenticate('magiclink', { action : 'acceptToken' }),
     (req, res) => res.redirect('/profile')
   )
   ```
