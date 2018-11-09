@@ -93,7 +93,7 @@ class MagicLinkStrategy extends PassportStrategy {
           user = await this.verifyUser(userFields)
         }
       } catch (err) {
-        return this.fail(err)
+        return this.error(err)
       }
 
       if (!user) {
@@ -164,7 +164,7 @@ class MagicLinkStrategy extends PassportStrategy {
           user = await this.verifyUser(user)
         }
       } catch (err) {
-        return this.fail(err)
+        return this.error(err)
       }
 
       if (!user) {

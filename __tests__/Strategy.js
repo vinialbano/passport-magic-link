@@ -137,7 +137,7 @@ describe('Strategy', () => {
         expect(verifyUser).toHaveBeenCalledWith({email: 'john@doe.com'})
       })
 
-      test('fails when the verifyUser function rejects', (done) => {
+      test('calls error when the verifyUser function rejects', (done) => {
         const sendToken = () => {}
         const verifyUser = () => Promise.reject(new Error('No user found'))
 
@@ -157,7 +157,7 @@ describe('Strategy', () => {
               email: 'john@doe.com'
             }
           })
-          .fail(result => {
+          .error(result => {
             expect(result.message).toBe('No user found')
             done()
           })
@@ -601,7 +601,7 @@ describe('Strategy', () => {
 
     describe('when the user is verified after the token is sent', () => {
       describe('when the passReqToCallbacks option is true', () => {
-        test('fails when the verifyUser function rejects', (done) => {
+        test('calls error when the verifyUser function rejects', (done) => {
           const verifyMock = jest.spyOn(jwt, 'verify')
           verifyMock.mockImplementation((jwtString, secretOrPrivateKey, callback) => {
             callback(null, {
@@ -633,7 +633,7 @@ describe('Strategy', () => {
                 token: '123456'
               }
             })
-            .fail(result => {
+            .error(result => {
               expect(result.message).toBe('User not found')
               expect(verifyUser).toHaveBeenCalledWith({
                 headers: {},
@@ -762,7 +762,7 @@ describe('Strategy', () => {
       })
 
       describe('when the passReqToCallbacks option is false', () => {
-        test('fails when the verifyUser function rejects', (done) => {
+        test('calls error when the verifyUser function rejects', (done) => {
           const verifyMock = jest.spyOn(jwt, 'verify')
           verifyMock.mockImplementation((jwtString, secretOrPrivateKey, callback) => {
             callback(null, {
@@ -793,7 +793,7 @@ describe('Strategy', () => {
                 token: '123456'
               }
             })
-            .fail(result => {
+            .error(result => {
               expect(result.message).toBe('User not found')
               expect(verifyUser).toHaveBeenCalledWith({
                 email: 'john@doe.com',
@@ -898,6 +898,28 @@ describe('Strategy', () => {
         })
       })
     })
+  })
+
+  test('calls acceptToken as a default action', (done) => {
+    const sendToken = () => {}
+    const verifyUser = () => {}
+
+    const strategy = new Strategy(
+      {
+        secret: 'top-secret',
+        userFields: ['email', 'name'],
+        tokenField: 'token'
+      },
+      sendToken,
+      verifyUser)
+
+    testPassport
+      .use(strategy)
+      .pass(result => {
+        expect(result.message).toBe('Token missing')
+        done()
+      })
+      .authenticate()
   })
 
   test('calls error when non existing action is called', (done) => {
