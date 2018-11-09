@@ -152,7 +152,7 @@ class MagicLinkStrategy extends PassportStrategy {
       )
       user = tokenUser
     } catch (err) {
-      return this.error(err)
+      return this.fail(err)
     }
 
     if (this.verifyUserAfterToken) {

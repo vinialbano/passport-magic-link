@@ -523,7 +523,7 @@ describe('Strategy', () => {
         .authenticate({action: 'acceptToken', allowPost: true})
     })
 
-    test('calls error when the token validation fails', (done) => {
+    test('fails when the token validation fails', (done) => {
       const verifyMock = jest.spyOn(jwt, 'verify')
       verifyMock.mockImplementation((jwtString, secretOrPrivateKey, callback) => {
         callback(new Error('Token verification error'))
@@ -548,7 +548,7 @@ describe('Strategy', () => {
             token: '123456'
           }
         })
-        .error(result => {
+        .fail(result => {
           expect(result.message).toBe('Token verification error')
           verifyMock.mockRestore()
           done()
