@@ -70,9 +70,7 @@ class MagicLinkStrategy extends PassportStrategy {
     let user
 
     for (let i = 0; i < this.userFields.length; i++) {
-      const fieldValue = options.allowPost
-        ? lookup(req.body, this.userFields[i]) || lookup(req.query, this.userFields[i])
-        : lookup(req.query, this.userFields[i])
+      const fieldValue = lookup(req.body, this.userFields[i]) || lookup(req.query, this.userFields[i])
       if (!fieldValue) {
         userFields = null
         break
@@ -98,7 +96,7 @@ class MagicLinkStrategy extends PassportStrategy {
 
       if (!user) {
         return this.fail(
-          new Error(options.authMessage || `No user found`),
+          {message: options.authMessage || `No user found`},
           400
         )
       }
@@ -134,9 +132,7 @@ class MagicLinkStrategy extends PassportStrategy {
   }
 
   async acceptToken (req, options) {
-    const token = options.allowPost
-      ? lookup(req.body, this.tokenField) || lookup(req.query, this.tokenField)
-      : lookup(req.query, this.tokenField)
+    const token = lookup(req.body, this.tokenField) || lookup(req.query, this.tokenField)
 
     if (!token) {
       return this.pass({message: 'Token missing'})
@@ -152,7 +148,7 @@ class MagicLinkStrategy extends PassportStrategy {
       )
       user = tokenUser
     } catch (err) {
-      return this.fail(err)
+      return this.fail({message: err.message})
     }
 
     if (this.verifyUserAfterToken) {
@@ -169,7 +165,7 @@ class MagicLinkStrategy extends PassportStrategy {
 
       if (!user) {
         return this.fail(
-          new Error(options.authMessage || `No user found`),
+          {message: options.authMessage || `No user found`},
           400
         )
       }

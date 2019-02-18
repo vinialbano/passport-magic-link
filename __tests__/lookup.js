@@ -14,21 +14,26 @@ describe('Lookup', () => {
       field: 'value'
     }, 'field')).toBe('value')
     expect(lookup({
+      field: ['arrayValue']
+    }, 'field')).toEqual(expect.arrayContaining(['arrayValue']))
+    expect(lookup({
+      field: {
+        innerField: 'innerValue'
+      }
+    }, 'field')).toMatchObject({
+      innerField: 'innerValue'
+    })
+  })
+
+  test('returns a nested field when the field is an object or array', () => {
+    expect(lookup({
       field: {
         innerField: 'innerValue'
       }
     }, 'field[innerField]')).toBe('innerValue')
-  })
-
-  test('returns null when the field is an object or array', () => {
-    expect(lookup({
-      field: {
-        innerField: 'innerValue'
-      }
-    }, 'field')).toBeNull()
 
     expect(lookup({
-      field: ['oi']
-    }, 'field')).toBeNull()
+      field: ['arrayValue']
+    }, 'field[0]')).toBe('arrayValue')
   })
 })

@@ -11,7 +11,7 @@ module.exports = (obj, field) => {
     if (typeof prop === 'undefined') {
       return null
     }
-    if (typeof prop !== 'object') {
+    if (typeof prop !== 'object' || i === len - 1) {
       return prop
     }
     obj = prop
