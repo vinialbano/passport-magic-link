@@ -135,7 +135,7 @@ class MagicLinkStrategy extends PassportStrategy {
     const token = lookup(req.body, this.tokenField) || lookup(req.query, this.tokenField)
 
     if (!token) {
-      return this.pass({message: 'Token missing'})
+      return this.fail({message: 'Token missing'})
     }
 
     let user

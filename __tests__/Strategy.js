@@ -508,7 +508,7 @@ describe('Strategy', () => {
 
       testPassport
         .use(strategy)
-        .pass(result => {
+        .fail(result => {
           expect(result.message).toBe('Token missing')
           done()
         })
@@ -516,7 +516,7 @@ describe('Strategy', () => {
 
       testPassport
         .use(strategy)
-        .pass(result => {
+        .fail(result => {
           expect(result.message).toBe('Token missing')
           done()
         })
@@ -915,7 +915,7 @@ describe('Strategy', () => {
 
     testPassport
       .use(strategy)
-      .pass(result => {
+      .fail(result => {
         expect(result.message).toBe('Token missing')
         done()
       })
