@@ -3,6 +3,7 @@ const {passport: testPassport} = require('chai').use(
 )
 const Strategy = require('../src/Strategy')
 const jwt = require('jsonwebtoken')
+const storage = require('../src/MemoryStorage')
 
 describe('Strategy', () => {
   describe('#constructor', () => {
@@ -556,8 +557,73 @@ describe('Strategy', () => {
         .authenticate({action: 'acceptToken'})
     })
 
+    describe('when the token reuse is not allowed', () => {
+      test('fails if the token has been used before', (done) => {
+        const verifyMock = jest.spyOn(jwt, 'verify')
+        verifyMock.mockImplementation((jwtString, secretOrPrivateKey, callback) => {
+          callback(null, {
+            user: {
+              name: 'John Doe',
+              email: 'john@doe.com'
+            },
+            exp: new Date('01-01-2019')
+          })
+        })
+
+        const storageGetMock = jest.spyOn(storage, 'get')
+        const storageSetMock = jest.spyOn(storage, 'set')
+        storageGetMock.mockImplementationOnce((key) => {
+          return {
+            '234567': new Date('2019-05-01'),
+            '456789': new Date('2019-01-02')
+          }
+        })
+
+        const sendToken = () => {}
+        const verifyUser = () => {}
+
+        const strategy = new Strategy(
+          {
+            secret: 'top-secret',
+            userFields: ['email', 'name'],
+            tokenField: 'token'
+          },
+          sendToken,
+          verifyUser)
+
+        testPassport
+          .use(strategy)
+          .req(req => {
+            req.query = {
+              token: '789123'
+            }
+          })
+          .success(user => {
+            expect(storageSetMock).toHaveBeenCalledWith('john@doe.com', {'234567': new Date('2019-05-01'), '789123': new Date('01-01-2019')})
+
+            testPassport
+              .use(strategy)
+              .req(req => {
+                req.query = {
+                  token: '234567'
+                }
+              })
+              .fail(err => {
+                expect(err.message).toBe('Token was already used')
+                expect(err.status).toBe(400)
+                verifyMock.mockRestore()
+                storageSetMock.mockRestore()
+                storageGetMock.mockRestore()
+                done()
+              })
+              .authenticate({action: 'acceptToken', allowReuse: false})
+          })
+          .authenticate({action: 'acceptToken', allowReuse: false})
+      })
+    })
+
     describe('when the user is verified before the token is sent', () => {
-      test('succeeds when the token is valid', (done) => {
+      test('succeeds when the token is valid and the token is not reused', (done) => {
         const verifyMock = jest.spyOn(jwt, 'verify')
         verifyMock.mockImplementation((jwtString, secretOrPrivateKey, callback) => {
           callback(null, {
@@ -595,7 +661,7 @@ describe('Strategy', () => {
             verifyMock.mockRestore()
             done()
           })
-          .authenticate({action: 'acceptToken'})
+          .authenticate({action: 'acceptToken', allowReuse: true})
       })
     })
 
@@ -757,7 +823,7 @@ describe('Strategy', () => {
 
               done()
             })
-            .authenticate({action: 'acceptToken'})
+            .authenticate({action: 'acceptToken', allowReuse: true})
         })
       })
 

@@ -21,6 +21,7 @@ Magic Link authentication for Passport JS
     * `ttl`: Optional integer, defaults to 10 minutes (in seconds). It's used to set the token expiration
     * `passReqToCallbacks`: Optional boolean, defaults to false. If true, the request is passed to the `sendToken` and `verifyUser` functions.
     * `verifyUserAfterToken`: Optional boolean, defaults to false. If true, the request data is passed to the token and the user is verified after the token confirmation.
+    * `storage`: Optional token storage instance. Defaults to MemoryStorage.
   * `sendToken`: A function that is used to deliver the token to the user. You may use an email service, SMS or whatever method you want. It receives the user object, the token and optionally the request. It returns a promise indicating whether the token has been sent or not.
   * `verifyUser`: A function that receives the request and returns a promise containing the user object. It may be used to insert and/or find the user in the database. It may be executed before the token creation or after the token confirmation.
 
@@ -64,6 +65,21 @@ Magic Link authentication for Passport JS
   ```javascript
   app.get('/auth/magiclink/callback',
     passport.authenticate('magiclink', { action : 'acceptToken' }),
+    (req, res) => res.redirect('/profile')
+  )
+  ```
+  
+  The options field can also receive some optional properties:
+  * `allowReuse`: A boolean indicating whether a token can be used more than once. Defaults to `false`.
+  * `userPrimaryKey`: A string containing the primary key of the user object. This is only used if the token cannot be reused. Defaults to `email`.
+  * `tokenAlreadyUsedMessage`: A string containing the error message if the token has already been used. Defaults to `Token was already used`.
+  
+  ```javascript
+  app.get('/auth/magiclink/callback',
+    passport.authenticate('magiclink', {
+      action : 'acceptToken',
+      userPrimaryKey: 'id'
+     }),
     (req, res) => res.redirect('/profile')
   )
   ```

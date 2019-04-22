@@ -2,6 +2,7 @@ const PassportStrategy = require('passport-strategy')
 const jwt = require('jsonwebtoken')
 const {promisify} = require('util')
 const lookup = require('./lookup')
+const memoryStorage = require('./MemoryStorage')
 
 class MagicLinkStrategy extends PassportStrategy {
   /**
@@ -13,6 +14,7 @@ class MagicLinkStrategy extends PassportStrategy {
    * @param {Boolean} verifyUserAfterToken - Whether the user should be verified after the token verification
    * @param {Function} sendToken - A function to deliver the token
    * @param {Function} verifyUser - A function to verify the user
+   * @param {Object} storage - The storage for persistent tokens
    */
   constructor (
     {
@@ -21,7 +23,8 @@ class MagicLinkStrategy extends PassportStrategy {
       tokenField,
       ttl = 60 * 10, // default: 10 minutes
       passReqToCallbacks = false,
-      verifyUserAfterToken = false
+      verifyUserAfterToken = false,
+      storage = memoryStorage // default: In-memory storage
     },
     sendToken,
     verifyUser
@@ -40,6 +43,7 @@ class MagicLinkStrategy extends PassportStrategy {
     this.verifyUserAfterToken = verifyUserAfterToken
     this.userFields = userFields
     this.tokenField = tokenField
+    this.storage = storage
     this.sendToken = sendToken
     this.verifyUser = verifyUser
   }
@@ -139,14 +143,16 @@ class MagicLinkStrategy extends PassportStrategy {
     }
 
     let user
+    let tokenExpiration
     try {
       // Verify token
       const verifyToken = promisify(jwt.verify)
-      let {user: tokenUser} = await verifyToken(
+      let {user: tokenUser, exp} = await verifyToken(
         token,
         this.secret
       )
       user = tokenUser
+      tokenExpiration = exp
     } catch (err) {
       return this.fail({message: err.message})
     }
@@ -169,6 +175,34 @@ class MagicLinkStrategy extends PassportStrategy {
           400
         )
       }
+    }
+
+    // Invalidate already used tokens
+    const allowReuse = options.allowReuse || false
+    const primaryKey = options.userPrimaryKey || 'email'
+
+    if (!allowReuse) {
+      // Get used tokens from storage
+      const userUID = user[primaryKey]
+      const usedTokens = (await this.storage.get(userUID)) || {}
+      if (usedTokens[token]) {
+        return this.fail({
+          message: (options.tokenAlreadyUsedMessage || 'Token was already used'),
+          status: 400
+        })
+      }
+      // If you using a persistent token storage you might want to
+      // regularly prune expired tokens
+      Object.keys(usedTokens).forEach(token => {
+        const expiration = usedTokens[token]
+        if (expiration <= Date.now()) {
+          delete usedTokens[token]
+        }
+      })
+
+      // Revoke the token (No need to revoke already expired tokens)
+      usedTokens[token] = tokenExpiration
+      await this.storage.set(userUID, usedTokens)
     }
 
     // Pass setting a passport user
