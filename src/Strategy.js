@@ -75,7 +75,7 @@ class MagicLinkStrategy extends PassportStrategy {
 
     for (let i = 0; i < this.userFields.length; i++) {
       const fieldValue = lookup(req.body, this.userFields[i]) || lookup(req.query, this.userFields[i])
-      if (!fieldValue) {
+      if (typeof fieldValue === 'undefined') {
         userFields = null
         break
       }

@@ -1,6 +1,6 @@
 module.exports = (obj, field) => {
   if (!obj) {
-    return null
+    return undefined
   }
   const chain = field
     .split(']')
@@ -9,12 +9,12 @@ module.exports = (obj, field) => {
   for (let i = 0, len = chain.length; i < len; i++) {
     const prop = obj[chain[i]]
     if (typeof prop === 'undefined') {
-      return null
+      return undefined
     }
     if (typeof prop !== 'object' || i === len - 1) {
       return prop
     }
     obj = prop
   }
-  return null
+  return undefined
 }

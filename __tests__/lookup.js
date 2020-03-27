@@ -1,12 +1,12 @@
 const lookup = require('../src/lookup')
 
 describe('Lookup', () => {
-  test('returns null when the object is not valid', () => {
-    expect(lookup(null, '')).toBeNull()
-    expect(lookup(undefined, '')).toBeNull()
-    expect(lookup('', '')).toBeNull()
-    expect(lookup(1, '')).toBeNull()
-    expect(lookup({}, '')).toBeNull()
+  test('returns undefined when the object is not valid', () => {
+    expect(lookup(null, '')).toBeUndefined()
+    expect(lookup(undefined, '')).toBeUndefined()
+    expect(lookup('', '')).toBeUndefined()
+    expect(lookup(1, '')).toBeUndefined()
+    expect(lookup({}, '')).toBeUndefined()
   })
 
   test('returns the value when a field is found in the object', () => {

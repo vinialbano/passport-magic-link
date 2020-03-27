@@ -599,13 +599,13 @@ describe('Strategy', () => {
             }
           })
           .success(user => {
-            expect(storageSetMock).toHaveBeenCalledWith('john@doe.com', {'234567': new Date('2019-05-01'), '789123': new Date('01-01-2019')})
+            expect(storageSetMock).toHaveBeenCalledWith('john@doe.com', {'789123': new Date('01-01-2019')})
 
             testPassport
               .use(strategy)
               .req(req => {
                 req.query = {
-                  token: '234567'
+                  token: '789123'
                 }
               })
               .fail(err => {
