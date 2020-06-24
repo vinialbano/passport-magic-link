@@ -74,7 +74,7 @@ class MagicLinkStrategy extends PassportStrategy {
     let user
 
     for (let i = 0; i < this.userFields.length; i++) {
-      const fieldValue = lookup(req.body, this.userFields[i]) || lookup(req.query, this.userFields[i])
+      const fieldValue = lookup(req.body, this.userFields[i]) || lookup(req.query, this.userFields[i]) || lookup(req.params, this.userFields[i])
       if (typeof fieldValue === 'undefined') {
         userFields = null
         break
@@ -136,7 +136,7 @@ class MagicLinkStrategy extends PassportStrategy {
   }
 
   async acceptToken (req, options) {
-    const token = lookup(req.body, this.tokenField) || lookup(req.query, this.tokenField)
+    const token = lookup(req.body, this.tokenField) || lookup(req.query, this.tokenField) || lookup(req.params, this.userFields[i])
 
     if (!token) {
       return this.fail({message: 'Token missing'})
