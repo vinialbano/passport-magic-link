@@ -136,7 +136,7 @@ class MagicLinkStrategy extends PassportStrategy {
   }
 
   async acceptToken (req, options) {
-    const token = lookup(req.body, this.tokenField) || lookup(req.query, this.tokenField)
+    const token = lookup(req.body, this.tokenField) || lookup(req.query, this.tokenField) || lookup(req.params, this.tokenField)
 
     if (!token) {
       return this.fail({message: 'Token missing'})
