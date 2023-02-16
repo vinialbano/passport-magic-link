@@ -51,7 +51,7 @@
     "@babel/plugin-transform-runtime": "^7.0.0",
     "@babel/preset-env": "^7.0.0",
     "babel-core": "^7.0.0-bridge.0",
-    "babel-jest": "^23.4.2",
+    "babel-jest": "^29.4.3",
     "chai": "^4.2.0",
     "chai-passport-strategy": "^1.0.1",
     "coveralls": "^3.0.2",
