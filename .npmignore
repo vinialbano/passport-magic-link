@@ -1,0 +1,48 @@
+# Source files
+src/
+
+# Tests
+**/__tests__/
+*.test.ts
+*.spec.ts
+
+# Configuration files
+tsconfig.json
+tsconfig.*.json
+jest.config.js
+.eslintrc*
+eslint.config.*
+.prettierrc*
+.editorconfig
+
+# CI/CD
+.github/
+.husky/
+.vscode/
+.claude/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Development
+node_modules/
+coverage/
+.nyc_output/
+*.log
+.env
+.env.*
+
+# Editor files
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Lock files (optional - some prefer to include)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
