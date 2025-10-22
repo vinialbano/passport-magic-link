@@ -30,7 +30,7 @@
     "CHANGELOG.md"
   ],
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "build": "rm -rf lib/ && tsc && tsc -p tsconfig.cjs.json && echo '{\"type\":\"commonjs\"}' > lib/cjs/package.json",

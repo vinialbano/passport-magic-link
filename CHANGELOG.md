@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 
 - **TypeScript Migration**: Package is now written in TypeScript with full type definitions
-- **Node.js 18+**: Minimum Node.js version is now 18.0.0 (previously no explicit requirement)
+- **Node.js 20+**: Minimum Node.js version is now 20.0.0 (previously no explicit requirement). Node.js 20 is in Maintenance LTS until April 2026, Node.js 22 is in Active LTS until April 2027.
 - **ESM First**: Package now uses ES modules by default with CommonJS compatibility
 - **Simplified Architecture**: Core logic consolidated into single Strategy class
 - **API Changes**:
@@ -80,11 +80,13 @@ const { Strategy: MagicLinkStrategy } = require('passport-magic-link');
 
 #### Node.js Version
 
-Ensure you're running Node.js 18 or higher:
+Ensure you're running Node.js 20 or higher:
 
 ```bash
-node --version  # Should be v18.0.0 or higher
+node --version  # Should be v20.0.0 or higher
 ```
+
+**Note**: Node.js 18 reaches end-of-life on April 30, 2025. We recommend using Node.js 22 (Active LTS) or Node.js 20 (Maintenance LTS).
 
 ## [2.1.1] - Previous Release
 
