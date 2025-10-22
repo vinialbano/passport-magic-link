@@ -33,7 +33,7 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "build": "rm -rf lib/ && tsc && tsc -p tsconfig.cjs.json && echo '{\"type\":\"commonjs\"}' > lib/cjs/package.json",
+    "build": "rimraf lib && tsc && tsc -p tsconfig.cjs.json && node scripts/create-cjs-package.cjs",
     "dev": "jest --watch --selectProjects unit",
     "test": "jest",
     "lint": "eslint \"src/**/*.ts\"",
@@ -94,6 +94,7 @@
     "lint-staged": "^16.2.3",
     "passport": "^0.7.0",
     "prettier": "^3.6.2",
+    "rimraf": "^6.0.1",
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.4",
     "tslib": "^2.8.1",
