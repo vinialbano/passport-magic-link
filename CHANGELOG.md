@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.0] - Unreleased
+## [3.0.0] - 2025-10-22
 
 ### Breaking Changes
 
@@ -53,29 +53,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### For TypeScript Users
 
 ```typescript
-import { Strategy as MagicLinkStrategy } from 'passport-magic-link';
+import { Strategy as MagicLinkStrategy } from 'passport-magic-link'
 
 // Full type inference and autocomplete support
-const strategy = new MagicLinkStrategy({
-  secret: 'your-secret',
-  userFields: ['email'],
-  tokenField: 'token',
-  ttl: 300, // TypeScript will validate this is 1-86400
-}, async (user, token) => {
-  // sendToken implementation
-}, async (user) => {
-  // verifyUser implementation
-});
+const strategy = new MagicLinkStrategy(
+  {
+    secret: 'your-secret',
+    userFields: ['email'],
+    tokenField: 'token',
+    ttl: 300 // TypeScript will validate this is 1-86400
+  },
+  async (user, token) => {
+    // sendToken implementation
+  },
+  async user => {
+    // verifyUser implementation
+  }
+)
 ```
 
 #### For JavaScript Users
 
 ```javascript
 // ESM (recommended)
-import { Strategy as MagicLinkStrategy } from 'passport-magic-link';
+import { Strategy as MagicLinkStrategy } from 'passport-magic-link'
 
 // CommonJS (still supported)
-const { Strategy: MagicLinkStrategy } = require('passport-magic-link');
+const { Strategy: MagicLinkStrategy } = require('passport-magic-link')
 ```
 
 #### Node.js Version
