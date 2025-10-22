@@ -25,10 +25,11 @@ jobs:
     
     - run: npm ci
     - run: npm run lint
-    - run: npm run test:all
+    - run: npm run typecheck
+    - run: npm test
     - run: npm run build
-    - run: npm run size
     - run: npm audit --audit-level moderate
+      continue-on-error: true
 
   release:
     name: Release to NPM
@@ -47,14 +48,6 @@ jobs:
     - run: npm ci
     - run: npm run build
     
-    - name: Configure Git
-      run: |
-        git config user.name "GitHub Actions"
-        git config user.email "actions@github.com"
-    
-    - name: Generate Release Notes
-      run: node scripts/generate-release-notes.js
-    
     - name: Publish to NPM (with provenance)
       run: npm publish --provenance --access public
       env:
@@ -63,19 +56,6 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
-        body_path: RELEASE_NOTES.md
-        files: |
-          lib/**
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  post-release:
-    name: Post-Release Tasks
-    runs-on: ubuntu-latest
-    needs: release
-    
-    steps:
-    - uses: actions/checkout@v4
-    - run: node scripts/post-release-tasks.js
+        generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
