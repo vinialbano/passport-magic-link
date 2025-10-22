@@ -68,3 +68,11 @@ wallaby.js
 
 # Build Specific
 lib
+
+# Generated Reports
+bundle-report.json
+dependency-report.json
+performance-report.json
+
+# Claude Code
+.claude/

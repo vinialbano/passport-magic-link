@@ -1,0 +1,35 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    assignees:
+      - "vinialbano"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+    ignore:
+      # Ignore major version updates for critical packages
+      - dependency-name: "passport-strategy"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "jsonwebtoken"
+        update-types: ["version-update:semver-major"]
+    groups:
+      babel:
+        patterns:
+          - "@babel/*"
+      eslint:
+        patterns:
+          - "eslint*"
+      jest:
+        patterns:
+          - "jest"
+          - "babel-jest"
+          - "@jest/*"

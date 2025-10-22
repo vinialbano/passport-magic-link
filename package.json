@@ -1,25 +1,52 @@
 {
   "name": "passport-magic-link",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Passport JS module for Magic Link authentication",
-  "main": "index.js",
+  "main": "index.cjs",
+  "module": "lib/esm/index.js",
+  "types": "lib/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/esm/index.js",
+      "require": "./index.cjs",
+      "default": "./lib/esm/index.js"
+    },
+    "./lib/cjs": {
+      "require": "./lib/cjs/index.js",
+      "default": "./lib/cjs/index.js"
+    },
+    "./lib/esm": {
+      "import": "./lib/esm/index.js",
+      "default": "./lib/esm/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "/lib",
-    "index.js"
+    "index.cjs",
+    "README.md",
+    "CHANGELOG.md"
   ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
-    "build": "babel src -d lib",
-    "dev": "jest --watch",
-    "precommit": "lint-staged",
+    "build": "rimraf lib && tsc && tsc -p tsconfig.cjs.json && node scripts/create-cjs-package.cjs",
+    "dev": "jest --watch --selectProjects unit",
     "test": "jest",
-    "coverage": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
-    "prepublish": "npm run build"
+    "lint": "eslint \"src/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run lint && npm test && npm run build"
   },
   "lint-staged": {
-    "*.js": [
-      "eslint --fix",
-      "git add",
-      "jest --bail --findRelatedTests"
+    "*.{js,ts}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "src/**/!(*.spec|*.test).ts": [
+      "jest --bail --findRelatedTests --passWithNoTests"
     ]
   },
   "repository": {
@@ -45,39 +72,37 @@
   },
   "homepage": "https://github.com/vinialbano/passport-magic-link#readme",
   "devDependencies": {
-    "@babel/cli": "^7.0.0",
-    "@babel/core": "^7.0.0",
-    "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
-    "@babel/plugin-transform-runtime": "^7.0.0",
-    "@babel/preset-env": "^7.0.0",
-    "babel-core": "^7.0.0-bridge.0",
-    "babel-jest": "^29.4.3",
-    "chai": "^4.2.0",
-    "chai-passport-strategy": "^1.0.1",
-    "coveralls": "^3.0.2",
-    "eslint": "^5.14.0",
-    "eslint-config-standard": "^11.0.0",
-    "eslint-plugin-import": "^2.16.0",
-    "eslint-plugin-jest": "^21.27.2",
-    "eslint-plugin-node": "^7.0.1",
-    "eslint-plugin-promise": "^4.0.1",
-    "eslint-plugin-standard": "^3.1.0",
-    "husky": "^0.14.3",
-    "jest": "^25.2.3",
-    "lint-staged": "^7.3.0"
-  },
-  "jest": {
-    "clearMocks": true,
-    "coverageDirectory": "./coverage/",
-    "collectCoverage": true,
-    "coverageReporters": [
-      "lcov"
-    ]
+    "@eslint/js": "^9.37.0",
+    "@total-typescript/tsconfig": "^1.0.4",
+    "@types/chai": "^5.2.2",
+    "@types/express": "^5.0.3",
+    "@types/express-session": "^1.18.2",
+    "@types/jest": "^30.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.6.2",
+    "@types/passport-strategy": "^0.2.38",
+    "@types/supertest": "^6.0.3",
+    "chai": "^6.2.0",
+    "chai-passport-strategy": "^3.0.0",
+    "eslint": "^9.37.0",
+    "eslint-plugin-jest": "^29.0.1",
+    "eslint-plugin-n": "^17.23.1",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "husky": "^9.1.7",
+    "jest": "^30.2.0",
+    "lint-staged": "^16.2.3",
+    "passport": "^0.7.0",
+    "prettier": "^3.6.2",
+    "rimraf": "^6.0.1",
+    "supertest": "^7.1.4",
+    "ts-jest": "^29.4.4",
+    "tslib": "^2.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.45.0"
   },
   "dependencies": {
-    "@babel/polyfill": "^7.0.0",
-    "@babel/runtime": "^7.3.1",
-    "jsonwebtoken": "^9.0.0",
+    "jsonwebtoken": "9.0.2",
     "passport-strategy": "^1.0.0"
   }
 }

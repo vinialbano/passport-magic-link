@@ -1,0 +1,37 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "eslint.validate": [
+    "javascript",
+    "typescript"
+  ],
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "javascript.preferences.includePackageJsonAutoImports": "on",
+  "npm.enableScriptExplorer": true,
+  "files.associations": {
+    "*.js": "javascript",
+    "*.md": "markdown"
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/coverage": true,
+    "**/lib": true,
+    "**/*.log": true,
+    "**/.nyc_output": true,
+    "**/bundle-report.json": true,
+    "**/dependency-report.json": true
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/node_modules": true,
+    "**/coverage": true,
+    "**/.nyc_output": true
+  },
+  "git.ignoreLimitWarning": true,
+  "typescript.suggest.autoImports": true,
+  "javascript.suggest.autoImports": true
+}

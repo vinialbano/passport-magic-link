@@ -6,9 +6,13 @@ Magic Link authentication for Passport JS
 
 ## Installation
 
-  `npm install passport-magic-link`
-  
+```bash
+npm install passport-magic-link
+```
+
 ## Usage
+
+This package supports both CommonJS and ES Modules, and includes TypeScript definitions.
 
 ### Configure Strategy
 
@@ -25,24 +29,68 @@ Magic Link authentication for Passport JS
   * `sendToken`: A function that is used to deliver the token to the user. You may use an email service, SMS or whatever method you want. It receives the user object, the token and optionally the request. It returns a promise indicating whether the token has been sent or not.
   * `verifyUser`: A function that receives the request and returns a promise containing the user object. It may be used to insert and/or find the user in the database. It may be executed before the token creation or after the token confirmation.
 
-#### Example
-   
-   ```javascript
-    const MagicLinkStrategy = require('passport-magic-link').Strategy
-    
-    passport.use(new MagicLinkStrategy({
-       secret: 'my-secret',
-       userFields: ['name', 'email'],
-       tokenField: 'token'
-    }, (user, token) => {
-       return MailService.sendMail({
-        to: user.email,
-        token
-       })
-    }, (user) => {
-      return User.findOrCreate({email: user.email, name: user.name})
-    }))
-   ```
+#### Examples
+
+**CommonJS:**
+```javascript
+const { Strategy } = require('passport-magic-link')
+
+passport.use(new Strategy({
+   secret: 'my-secret',
+   userFields: ['name', 'email'],
+   tokenField: 'token'
+}, (user, token) => {
+   return MailService.sendMail({
+    to: user.email,
+    token
+   })
+}, (user) => {
+  return User.findOrCreate({email: user.email, name: user.name})
+}))
+```
+
+**ES Modules:**
+```javascript
+import { Strategy } from 'passport-magic-link'
+
+passport.use(new Strategy({
+   secret: 'my-secret',
+   userFields: ['name', 'email'],
+   tokenField: 'token'
+}, (user, token) => {
+   return MailService.sendMail({
+    to: user.email,
+    token
+   })
+}, (user) => {
+  return User.findOrCreate({email: user.email, name: user.name})
+}))
+```
+
+**TypeScript:**
+```typescript
+import { Strategy, MagicLinkStrategyOptions } from 'passport-magic-link'
+import type { SendTokenFunction, VerifyUserFunction } from 'passport-magic-link'
+
+const options: MagicLinkStrategyOptions = {
+   secret: 'my-secret',
+   userFields: ['name', 'email'],
+   tokenField: 'token'
+}
+
+const sendToken: SendTokenFunction = async (user, token) => {
+   return MailService.sendMail({
+    to: user.email,
+    token
+   })
+}
+
+const verifyUser: VerifyUserFunction = async (user) => {
+  return User.findOrCreate({email: user.email, name: user.name})
+}
+
+passport.use(new Strategy(options, sendToken, verifyUser))
+```
    
   
 ### Authenticate Requests
@@ -83,7 +131,61 @@ Magic Link authentication for Passport JS
     (req, res) => res.redirect('/profile')
   )
   ```
+
+## TypeScript Support
+
+This package includes comprehensive TypeScript definitions. Key types include:
+
+- `MagicLinkStrategyOptions`: Configuration options for the strategy
+- `SendTokenFunction` / `SendTokenFunctionWithRequest`: Function signatures for token delivery
+- `VerifyUserFunction` / `VerifyUserFunctionWithRequest`: Function signatures for user verification
+- `StorageInterface`: Interface for custom token storage implementations
+- `MagicLinkUser`: User object structure
+- `MagicLinkPayload`: JWT payload structure
+
+### Custom Storage Implementation
+
+```typescript
+import { StorageInterface } from 'passport-magic-link'
+
+class RedisStorage implements StorageInterface {
+  async set(key: string, value: any): Promise<void> {
+    // Redis implementation
+  }
   
+  async get(key: string): Promise<any> {
+    // Redis implementation
+  }
+  
+  async delete(key: string): Promise<boolean> {
+    // Redis implementation
+  }
+}
+
+const strategy = new Strategy({
+  secret: 'my-secret',
+  userFields: ['email'],
+  tokenField: 'token',
+  storage: new RedisStorage()
+}, sendToken, verifyUser)
+```
+
+## Module Formats
+
+This package supports multiple import methods:
+
+```javascript
+// CommonJS
+const { Strategy, MemoryStorage, lookup } = require('passport-magic-link')
+
+// ES Modules
+import { Strategy, MemoryStorage, lookup } from 'passport-magic-link'
+
+// TypeScript
+import { Strategy, MemoryStorage, lookup } from 'passport-magic-link'
+import type { MagicLinkStrategyOptions } from 'passport-magic-link'
+```
+
 ## Acknowledgements
   
   This module is forked and modified from [Nick Balestra's Passport Zero](https://github.com/nickbalestra/zero)
