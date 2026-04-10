@@ -1,5 +1,6 @@
+import jwt from 'jsonwebtoken'
 import { MemoryStorage } from '../MemoryStorage.js'
-import { MagicLinkStrategy } from '../Strategy.js'
+import { MagicLinkStrategy, type JWTPayload } from '../Strategy.js'
 
 describe('MagicLinkStrategy - Validation', () => {
   const validOptions = {
@@ -19,7 +20,7 @@ describe('MagicLinkStrategy - Validation', () => {
       expect(
         () => new MagicLinkStrategy(optionsWithoutSecret, sendToken, verifyUser)
       ).toThrow(
-        'Magic Link authentication strategy requires an encryption secret'
+        'Magic Link authentication strategy requires either a secret or both createToken and verifyToken functions'
       )
     })
 
@@ -32,7 +33,7 @@ describe('MagicLinkStrategy - Validation', () => {
             verifyUser
           )
       ).toThrow(
-        'Magic Link authentication strategy requires an encryption secret'
+        'Magic Link authentication strategy requires either a secret or both createToken and verifyToken functions'
       )
     })
 
@@ -209,6 +210,61 @@ describe('MagicLinkStrategy - Validation', () => {
             verifyUser
           )
       ).not.toThrow()
+    })
+  })
+
+  describe('Custom Token Functions', () => {
+    const customTokenOptions = {
+      userFields: ['email'],
+      tokenField: 'token',
+      ttl: 600,
+      createToken: async (payload: JWTPayload, ttlSeconds: number) => {
+        return jwt.sign(payload, 'async-secret', { expiresIn: ttlSeconds })
+      },
+      verifyToken: async (token: string) => {
+        return jwt.verify(token, 'async-secret') as JWTPayload
+      }
+    }
+
+    it('should accept createToken and verifyToken without secret', () => {
+      expect(
+        () =>
+          new MagicLinkStrategy(customTokenOptions, sendToken, verifyUser)
+      ).not.toThrow()
+    })
+
+    it('should throw if only createToken is provided without verifyToken', () => {
+      expect(
+        () =>
+          new MagicLinkStrategy(
+            {
+              userFields: ['email'],
+              tokenField: 'token',
+              createToken: customTokenOptions.createToken
+            } as never,
+            sendToken,
+            verifyUser
+          )
+      ).toThrow(
+        'Magic Link authentication strategy requires either a secret or both createToken and verifyToken functions'
+      )
+    })
+
+    it('should throw if only verifyToken is provided without createToken', () => {
+      expect(
+        () =>
+          new MagicLinkStrategy(
+            {
+              userFields: ['email'],
+              tokenField: 'token',
+              verifyToken: customTokenOptions.verifyToken
+            } as never,
+            sendToken,
+            verifyUser
+          )
+      ).toThrow(
+        'Magic Link authentication strategy requires either a secret or both createToken and verifyToken functions'
+      )
     })
   })
 

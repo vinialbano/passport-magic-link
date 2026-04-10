@@ -145,7 +145,7 @@ export const createTestStrategy = (
 ): MagicLinkStrategy => {
   options.secret ??= 'top-secret'
   return new MagicLinkStrategy(
-    { ...testOptions.minimal, ...options },
+    { ...testOptions.minimal, ...options } as MagicLinkOptions,
     sendToken,
     verifyUser
   )
