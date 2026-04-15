@@ -143,7 +143,9 @@ export const createTestStrategy = (
   sendToken = createMockSendToken(),
   verifyUser = createMockVerifyUser(testUsers.valid)
 ): MagicLinkStrategy => {
-  options.secret ??= 'top-secret'
+  if (!options.secret && !(options.createToken && options.verifyToken)) {
+    options.secret = 'top-secret'
+  }
   return new MagicLinkStrategy(
     { ...testOptions.minimal, ...options } as MagicLinkOptions,
     sendToken,

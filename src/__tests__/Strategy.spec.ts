@@ -48,6 +48,24 @@ describe('MagicLinkStrategy - Validation', () => {
       ).toThrow('Secret cannot be empty')
     })
 
+    it('should throw error if secret and custom token functions are both provided', () => {
+      expect(
+        () =>
+          new MagicLinkStrategy(
+            {
+              ...validOptions,
+              secret: 'test-secret',
+              createToken: async () => 'token',
+              verifyToken: async () => ({ user: {}, iat: 0 })
+            } as never,
+            sendToken,
+            verifyUser
+          )
+      ).toThrow(
+        'Cannot provide both secret and custom token functions. Please choose one method for token handling.'
+      )
+    })
+
     it('should throw error if userFields is empty array', () => {
       expect(
         () =>
@@ -228,8 +246,7 @@ describe('MagicLinkStrategy - Validation', () => {
 
     it('should accept createToken and verifyToken without secret', () => {
       expect(
-        () =>
-          new MagicLinkStrategy(customTokenOptions, sendToken, verifyUser)
+        () => new MagicLinkStrategy(customTokenOptions, sendToken, verifyUser)
       ).not.toThrow()
     })
 

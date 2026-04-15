@@ -206,6 +206,11 @@ export class MagicLinkStrategy extends Strategy {
         'Magic Link authentication strategy requires either a secret or both createToken and verifyToken functions'
       )
     }
+    if (options.secret && hasCustomTokenFns) {
+      throw new Error(
+        'Cannot provide both secret and custom token functions. Please choose one method for token handling.'
+      )
+    }
     if (!options.userFields || !options.userFields.length) {
       throw new Error(
         'Magic Link authentication strategy requires an array of mandatory user fields'

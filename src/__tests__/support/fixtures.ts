@@ -36,7 +36,6 @@ export const testUsers = {
 
 export const testOptions = {
   minimal: {
-    secret: 'top-secret',
     userFields: ['email', 'name'] as string[],
     tokenField: 'token'
   },
