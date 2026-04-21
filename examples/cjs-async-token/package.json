@@ -1,0 +1,17 @@
+{
+  "name": "passport-magic-link-cjs-async-token-example",
+  "version": "1.0.0",
+  "description": "CommonJS example showing custom async createToken/verifyToken callbacks",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "passport": "^0.7.0",
+    "passport-magic-link": "^4.0.0"
+  }
+}

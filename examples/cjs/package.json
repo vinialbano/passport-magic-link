@@ -1,0 +1,16 @@
+{
+  "name": "passport-magic-link-cjs-example",
+  "version": "1.0.0",
+  "description": "Simple CommonJS example for passport-magic-link",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "passport": "^0.7.0",
+    "passport-magic-link": "^4.0.0"
+  }
+}
