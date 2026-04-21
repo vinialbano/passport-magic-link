@@ -1,13 +1,10 @@
 {
   "extends": "@total-typescript/tsconfig/tsc/no-dom/library",
   "compilerOptions": {
-    "outDir": "./lib/esm",
+    "outDir": "./lib",
     "rootDir": "./src",
     "declaration": true,
-    "declarationDir": "./lib",
     "declarationMap": true,
-    "sourceMap": true,
-    "importHelpers": true,
     "target": "ES2022",
     "lib": ["ES2022"],
     "verbatimModuleSyntax": false,

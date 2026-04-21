@@ -2,30 +2,25 @@
   "name": "passport-magic-link",
   "version": "3.0.0",
   "description": "Passport JS module for Magic Link authentication",
-  "main": "index.cjs",
-  "module": "lib/esm/index.js",
-  "types": "lib/index.d.ts",
+  "main": "./lib/index.cjs",
+  "module": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "type": "module",
   "exports": {
     ".": {
-      "types": "./lib/index.d.ts",
-      "import": "./lib/esm/index.js",
-      "require": "./index.cjs",
-      "default": "./lib/esm/index.js"
-    },
-    "./lib/cjs": {
-      "require": "./lib/cjs/index.js",
-      "default": "./lib/cjs/index.js"
-    },
-    "./lib/esm": {
-      "import": "./lib/esm/index.js",
-      "default": "./lib/esm/index.js"
+      "import": {
+        "types": "./lib/index.d.ts",
+        "default": "./lib/index.js"
+      },
+      "require": {
+        "types": "./lib/index.d.cts",
+        "default": "./lib/index.cjs"
+      }
     },
     "./package.json": "./package.json"
   },
   "files": [
     "/lib",
-    "index.cjs",
     "README.md",
     "CHANGELOG.md"
   ],
@@ -33,7 +28,7 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "build": "rimraf lib && tsc && tsc -p tsconfig.cjs.json && node scripts/create-cjs-package.cjs",
+    "build": "tsup && tsc --emitDeclarationOnly && node scripts/dual-dts.mjs",
     "dev": "jest --watch --selectProjects unit",
     "test": "jest",
     "lint": "eslint \"src/**/*.ts\"",
@@ -73,6 +68,8 @@
   "homepage": "https://github.com/vinialbano/passport-magic-link#readme",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@swc/core": "^1.15.30",
+    "@swc/jest": "^0.2.39",
     "@total-typescript/tsconfig": "^1.0.4",
     "@types/chai": "^5.2.2",
     "@types/express": "^5.0.3",
@@ -95,11 +92,9 @@
     "lint-staged": "^16.2.3",
     "passport": "^0.7.0",
     "prettier": "^3.6.2",
-    "rimraf": "^6.0.1",
     "supertest": "^7.1.4",
-    "ts-jest": "^29.4.4",
-    "tslib": "^2.8.1",
-    "typescript": "^5.9.3",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
     "typescript-eslint": "^8.45.0"
   },
   "dependencies": {

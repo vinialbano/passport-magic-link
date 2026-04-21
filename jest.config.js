@@ -1,77 +1,55 @@
+const swcTransform = [
+  '@swc/jest',
+  {
+    jsc: {
+      parser: { syntax: 'typescript', decorators: false },
+      target: 'es2022'
+    },
+    module: { type: 'es6' }
+  }
+]
+
+const projectBase = {
+  testEnvironment: 'node',
+  clearMocks: true,
+  extensionsToTreatAsEsm: ['.ts'],
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1'
+  },
+  transformIgnorePatterns: [],
+  transform: {
+    '^.+\\.(ts|js|mjs)$': swcTransform
+  },
+  collectCoverageFrom: [
+    '<rootDir>/src/**/*.ts',
+    '!<rootDir>/src/**/*.spec.ts',
+    '!<rootDir>/src/**/*.test.ts',
+    '!<rootDir>/src/__tests__/**'
+  ]
+}
+
 export default {
-  testTimeout: 10000, // Default timeout for all tests
+  testTimeout: 10000,
   extensionsToTreatAsEsm: ['.ts'],
   projects: [
     {
+      ...projectBase,
       displayName: 'unit',
       testMatch: ['<rootDir>/src/**/*.spec.ts'],
-      collectCoverageFrom: [
-        '<rootDir>/src/**/*.ts',
-        '!<rootDir>/src/**/*.spec.ts',
-        '!<rootDir>/src/**/*.test.ts',
-        '!<rootDir>/src/__tests__/**'
-      ],
-      coverageDirectory: './coverage/unit',
-      preset: 'ts-jest/presets/default-esm',
-      testEnvironment: 'node',
-      clearMocks: true,
-      extensionsToTreatAsEsm: ['.ts'],
-      moduleNameMapper: {
-        '^(\\.{1,2}/.*)\\.js$': '$1'
-      },
-      transformIgnorePatterns: [],
-      transform: {
-        '^.+\\.(ts|js|mjs)$': [
-          'ts-jest',
-          {
-            useESM: true,
-            tsconfig: {
-              allowJs: true,
-              esModuleInterop: true
-            }
-          }
-        ]
-      }
+      coverageDirectory: './coverage/unit'
     },
     {
+      ...projectBase,
       displayName: 'integration',
       testMatch: ['<rootDir>/src/**/*.test.ts'],
-      collectCoverageFrom: [
-        '<rootDir>/src/**/*.ts',
-        '!<rootDir>/src/**/*.spec.ts',
-        '!<rootDir>/src/**/*.test.ts',
-        '!<rootDir>/src/__tests__/**'
-      ],
-      coverageDirectory: './coverage/integration',
-      preset: 'ts-jest/presets/default-esm',
-      testEnvironment: 'node',
-      clearMocks: true,
-      extensionsToTreatAsEsm: ['.ts'],
-      moduleNameMapper: {
-        '^(\\.{1,2}/.*)\\.js$': '$1'
-      },
-      transformIgnorePatterns: [],
-      transform: {
-        '^.+\\.(ts|js|mjs)$': [
-          'ts-jest',
-          {
-            useESM: true,
-            tsconfig: {
-              allowJs: true,
-              esModuleInterop: true
-            }
-          }
-        ]
-      }
+      coverageDirectory: './coverage/integration'
     }
   ],
 
-  // Global configuration
   collectCoverage: true,
   coverageDirectory: './coverage',
   coverageReporters: ['lcov', 'text', 'html', 'json-summary'],
 
-  // Combined coverage threshold
   coverageThreshold: {
     global: {
       statements: 90,
