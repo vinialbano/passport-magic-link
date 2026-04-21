@@ -1,6 +1,7 @@
 import { Request } from 'express'
+import jwt from 'jsonwebtoken'
 import { MemoryStorage } from '../../MemoryStorage.js'
-import { MagicLinkOptions } from '../../Strategy.js'
+import { type JWTPayload, MagicLinkOptions } from '../../Strategy.js'
 import { testUsers } from '../support/fixtures.js'
 import {
   clearCapturedToken,
@@ -501,6 +502,125 @@ describe('MagicLinkStrategy - Integration Tests', () => {
         expect(customStorage.get).toHaveBeenCalled()
         expect(customStorage.set).toHaveBeenCalled()
       })
+    })
+  })
+
+  describe('custom createToken/verifyToken', () => {
+    const asyncSecret = 'async-signing-secret'
+
+    const makeCustomTokenStrategy = (
+      overrides: Partial<MagicLinkOptions> = {}
+    ) => {
+      const options = {
+        userFields: ['email', 'name'] as string[],
+        tokenField: 'token',
+        createToken: async (payload: JWTPayload, ttlSeconds: number) => {
+          return jwt.sign(payload, asyncSecret, { expiresIn: ttlSeconds })
+        },
+        verifyToken: async (token: string) => {
+          return jwt.verify(token, asyncSecret) as JWTPayload
+        },
+        ...overrides
+      }
+      return createTestStrategy(options as Partial<MagicLinkOptions>, sendToken, verifyUser)
+    }
+
+    it('should complete full authentication cycle with custom token functions', async () => {
+      const storage = new MemoryStorage()
+      const strategy = makeCustomTokenStrategy({
+        storage,
+        verifyUserAfterToken: true
+      })
+
+      // Step 1: Request magic link
+      await testStrategyPass(strategy, setupRequest(testUsers.valid), {
+        action: 'requestToken'
+      })
+
+      const token = getCapturedToken()!
+      expect(token).toBeTruthy()
+
+      // Step 2: Accept token
+      const { user } = await testStrategySuccess(
+        strategy,
+        setupRequest({ token }),
+        { action: 'acceptToken' }
+      )
+
+      expect(user).toEqual(testUsers.valid)
+    })
+
+    it('should prevent token reuse with custom token functions', async () => {
+      const storage = new MemoryStorage()
+      const strategy = makeCustomTokenStrategy({
+        storage,
+        verifyUserAfterToken: true
+      })
+
+      // Generate and use token
+      await testStrategyPass(strategy, setupRequest(testUsers.valid), {
+        action: 'requestToken'
+      })
+
+      const token = getCapturedToken()!
+
+      await testStrategySuccess(
+        strategy,
+        setupRequest({ token }),
+        { action: 'acceptToken' }
+      )
+
+      // Second use should fail
+      const { challenge } = await testStrategyFailure(
+        strategy,
+        setupRequest({ token }),
+        { action: 'acceptToken' }
+      )
+
+      expect(challenge).toBe('Token was already used')
+    })
+
+    it('should fail with Invalid token when verifyToken rejects', async () => {
+      const strategy = makeCustomTokenStrategy({
+        verifyUserAfterToken: false
+      })
+
+      // Use a token signed with a different secret
+      const badToken = jwt.sign({ user: testUsers.valid }, 'wrong-secret', {
+        expiresIn: 600
+      })
+
+      const { challenge } = await testStrategyFailure(
+        strategy,
+        setupRequest({ token: badToken }),
+        { action: 'acceptToken' }
+      )
+
+      expect(challenge).toBe('Invalid token')
+    })
+
+    it('should handle createToken failure gracefully', async () => {
+      const strategy = createTestStrategy(
+        {
+          createToken: async () => {
+            throw new Error('KMS unavailable')
+          },
+          verifyToken: async (token: string) => {
+            return jwt.verify(token, asyncSecret) as JWTPayload
+          },
+          verifyUserAfterToken: false
+        } as Partial<MagicLinkOptions>,
+        sendToken,
+        verifyUser
+      )
+
+      const error = await testStrategyError(
+        strategy,
+        setupRequest(testUsers.valid),
+        { action: 'requestToken' }
+      )
+
+      expect(error.message).toBe('Authentication failed')
     })
   })
 })

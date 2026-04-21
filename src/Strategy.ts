@@ -20,10 +20,24 @@ export interface JWTPayload {
 }
 
 /**
+ * Custom token creation function signature
+ * Receives the payload and TTL, returns a signed token string
+ */
+export type CreateToken = (
+  payload: JWTPayload,
+  ttlSeconds: number
+) => Promise<string>
+
+/**
+ * Custom token verification function signature
+ * Receives a token string, returns the verified payload (or throws on invalid)
+ */
+export type VerifyToken = (token: string) => Promise<JWTPayload>
+
+/**
  * Strategy configuration options
  */
-export interface MagicLinkOptions {
-  secret: string
+export type MagicLinkOptions = {
   userFields: string[]
   tokenField: string
   ttl?: number
@@ -31,8 +45,20 @@ export interface MagicLinkOptions {
   passReqToCallbacks?: boolean
   verifyUserAfterToken?: boolean
   storage?: TokenStorage
-  algorithm?: Algorithm
-}
+} & (
+  | {
+      secret: string
+      algorithm?: Algorithm
+      createToken?: never
+      verifyToken?: never
+    }
+  | {
+      secret?: never
+      algorithm?: never
+      createToken: CreateToken
+      verifyToken: VerifyToken
+    }
+)
 /**
  * Authentication options for authenticate method
  */
@@ -127,13 +153,13 @@ export class MagicLinkStrategy extends Strategy {
   public readonly name: string = 'magiclink'
 
   // Configuration properties
-  private readonly secret: string
   private readonly ttlSeconds: number
-  private readonly algorithm: Algorithm
   private readonly allowPost: boolean
   private readonly userFields: readonly string[]
   private readonly tokenField: string
   private readonly storage: TokenStorage
+  private readonly createTokenFn: CreateToken
+  private readonly verifyTokenFn: VerifyToken
 
   // Callback properties
   private readonly sendToken: SendToken
@@ -170,9 +196,19 @@ export class MagicLinkStrategy extends Strategy {
     super()
 
     // Validate required options
-    if (!options.secret) {
+    const hasCustomTokenFns =
+      'createToken' in options &&
+      'verifyToken' in options &&
+      options.createToken &&
+      options.verifyToken
+    if (!options.secret && !hasCustomTokenFns) {
       throw new Error(
-        'Magic Link authentication strategy requires an encryption secret'
+        'Magic Link authentication strategy requires either a secret or both createToken and verifyToken functions'
+      )
+    }
+    if (options.secret && hasCustomTokenFns) {
+      throw new Error(
+        'Cannot provide both secret and custom token functions. Please choose one method for token handling.'
       )
     }
     if (!options.userFields || !options.userFields.length) {
@@ -197,11 +233,27 @@ export class MagicLinkStrategy extends Strategy {
     }
 
     // Initialize configuration properties
-    this.secret = validateSecret(options.secret)
+    if (options.createToken && options.verifyToken) {
+      this.createTokenFn = options.createToken
+      this.verifyTokenFn = options.verifyToken
+    } else {
+      const secret = validateSecret(options.secret)
+      const algorithm = options.algorithm ?? 'HS256'
+      this.createTokenFn = async (payload: JWTPayload, ttlSeconds: number) => {
+        const jwtOptions = {
+          expiresIn: ttlSeconds,
+          algorithm
+        }
+        return jwt.sign(payload, secret, jwtOptions)
+      }
+      this.verifyTokenFn = async (token: string) => {
+        const jwtOptions = { algorithms: [algorithm] }
+        return jwt.verify(token, secret, jwtOptions) as JWTPayload
+      }
+    }
     this.userFields = validateUserFields(options.userFields)
     this.tokenField = options.tokenField
     this.ttlSeconds = validateTTL(options.ttl ?? DEFAULT_TTL_SECONDS)
-    this.algorithm = options.algorithm ?? 'HS256'
     this.allowPost = options.allowPost ?? true
     this.storage = options.storage ?? new MemoryStorage()
 
@@ -245,7 +297,7 @@ export class MagicLinkStrategy extends Strategy {
     const user = await this.verifyUserBeforeToken(userFields, req, options)
     if (!user) return
 
-    const token = this.generateToken(user)
+    const token = await this.generateToken(user)
     if (!token) return
 
     const delivered = await this.deliverToken(token, user, req)
@@ -324,15 +376,10 @@ export class MagicLinkStrategy extends Strategy {
   /**
    * Generate JWT token
    */
-  private generateToken(user: User): string | null {
+  private async generateToken(user: User): Promise<string | null> {
     try {
-      const payload = { user, iat: Math.floor(Date.now() / 1000) }
-      const jwtOptions = {
-        expiresIn: this.ttlSeconds,
-        algorithm: this.algorithm
-      }
-
-      return jwt.sign(payload, this.secret, jwtOptions)
+      const payload: JWTPayload = { user, iat: Math.floor(Date.now() / 1000) }
+      return await this.createTokenFn(payload, this.ttlSeconds)
     } catch (error) {
       console.error('Token generation failed:', error)
       this.error(new Error('Authentication failed'))
@@ -372,7 +419,7 @@ export class MagicLinkStrategy extends Strategy {
     const tokenString = this.extractToken(req)
     if (!tokenString) return
 
-    const verificationResult = this.verifyJwtToken(tokenString)
+    const verificationResult = await this.verifyJwtToken(tokenString)
     if (!verificationResult) return
 
     const { user: initialUser, tokenExpiration } = verificationResult
@@ -419,16 +466,11 @@ export class MagicLinkStrategy extends Strategy {
   /**
    * Verify JWT token and extract payload
    */
-  private verifyJwtToken(
+  private async verifyJwtToken(
     tokenString: string
-  ): { user: User; tokenExpiration: number } | null {
+  ): Promise<{ user: User; tokenExpiration: number } | null> {
     try {
-      const jwtOptions = { algorithms: [this.algorithm] }
-      const payload = jwt.verify(
-        tokenString,
-        this.secret,
-        jwtOptions
-      ) as JWTPayload
+      const payload = await this.verifyTokenFn(tokenString)
 
       return {
         user: payload.user,
