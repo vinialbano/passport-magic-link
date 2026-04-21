@@ -30,7 +30,7 @@
     "CHANGELOG.md"
   ],
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "build": "rimraf lib && tsc && tsc -p tsconfig.cjs.json && node scripts/create-cjs-package.cjs",
@@ -72,25 +72,26 @@
   },
   "homepage": "https://github.com/vinialbano/passport-magic-link#readme",
   "devDependencies": {
-    "@eslint/js": "^9.37.0",
+    "@eslint/js": "^10.0.1",
     "@total-typescript/tsconfig": "^1.0.4",
     "@types/chai": "^5.2.2",
     "@types/express": "^5.0.3",
     "@types/express-session": "^1.18.2",
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^24.6.2",
+    "@types/node": "^25.6.0",
     "@types/passport-strategy": "^0.2.38",
-    "@types/supertest": "^6.0.3",
+    "@types/supertest": "^7.2.0",
     "chai": "^6.2.0",
     "chai-passport-strategy": "^3.0.0",
-    "eslint": "^9.37.0",
+    "eslint": "^10.2.1",
     "eslint-plugin-jest": "^29.0.1",
     "eslint-plugin-n": "^17.23.1",
     "express": "^5.1.0",
     "express-session": "^1.18.2",
     "husky": "^9.1.7",
     "jest": "^30.2.0",
+    "jiti": "^2.6.1",
     "lint-staged": "^16.2.3",
     "passport": "^0.7.0",
     "prettier": "^3.6.2",
@@ -102,7 +103,7 @@
     "typescript-eslint": "^8.45.0"
   },
   "dependencies": {
-    "jsonwebtoken": "9.0.2",
+    "jsonwebtoken": "9.0.3",
     "passport-strategy": "^1.0.0"
   }
 }
