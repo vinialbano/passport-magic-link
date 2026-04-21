@@ -30,7 +30,7 @@
     "CHANGELOG.md"
   ],
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "build": "rimraf lib && tsc && tsc -p tsconfig.cjs.json && node scripts/create-cjs-package.cjs",
