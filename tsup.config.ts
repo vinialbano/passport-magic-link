@@ -4,7 +4,7 @@ export default defineConfig({
   entry: ['src/index.ts'],
   format: ['esm', 'cjs'],
   dts: false,
-  sourcemap: true,
+  sourcemap: false,
   clean: true,
   target: 'es2022',
   outDir: 'lib'

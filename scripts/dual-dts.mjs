@@ -13,8 +13,6 @@ function walk(dir) {
     }
     if (path.endsWith('.d.ts')) {
       copyFileSync(path, path.slice(0, -'.d.ts'.length) + '.d.cts')
-    } else if (path.endsWith('.d.ts.map')) {
-      copyFileSync(path, path.slice(0, -'.d.ts.map'.length) + '.d.cts.map')
     }
   }
 }
