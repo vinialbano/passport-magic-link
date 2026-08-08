@@ -123,6 +123,8 @@ passport.use(new Strategy(options, sendToken, verifyUser))
   * `allowReuse`: A boolean indicating whether a token can be used more than once. Defaults to `false`.
   * `userPrimaryKey`: A string containing the primary key of the user object. This is only used if the token cannot be reused. Defaults to `email`.
   * `tokenAlreadyUsedMessage`: A string containing the error message if the token has already been used. Defaults to `Token was already used`.
+  * `tokenExpiredMessage`: A string containing the error message if the token has expired. Defaults to `Invalid token`.
+  * `tokenInvalidMessage`: A string containing the error message if the token is invalid. Defaults to `Invalid token`.
   
   ```javascript
   app.get('/auth/magiclink/callback',
