@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0] - 2026-08-26
+
+### Added
+
+- **`tokenExpiredMessage` and `tokenInvalidMessage` options**: Optional `MagicLinkAuthenticateOptions` fields so consumers can distinguish an expired token from a malformed/invalid one in the challenge message shown to the end user (e.g., to prompt "request a new link"). Both default to the existing `Invalid token` message, so there is no behavior change unless a consumer opts in. Follows the pattern established by `tokenAlreadyUsedMessage`. (#63, thanks @andyjones)
+
+### Changed
+
+- **User verification errors are preserved as `Error.cause`**: When a `verifyUser` callback throws, the strategy still reports the generic `Authentication failed` error to Passport, but the original error is now attached via the standard `cause` property so it can be inspected upstream. (#62, thanks @andyjones)
+
+### Security
+
+- Bumped transitive `form-data` 4.0.5 → 4.0.6, `qs` 6.15.1 → 6.15.2, and `brace-expansion` (dev-only). (#59, #60, #64)
+
+### Dependencies
+
+- `eslint` group, `lint-staged`, `typescript-eslint`, `jest`, `@swc/core` bumped to latest (dev-only). (#53, #56, #57, #58, #61)
+
 ## [4.0.0] - 2026-04-21
 
 ### Breaking Changes
