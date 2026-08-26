@@ -368,7 +368,7 @@ export class MagicLinkStrategy extends Strategy {
       return user
     } catch (error) {
       console.error('User verification failed:', error)
-      this.error(new Error('Authentication failed'))
+      this.error(new Error('Authentication failed', { cause: error }))
       return null
     }
   }
@@ -508,7 +508,7 @@ export class MagicLinkStrategy extends Strategy {
       return verifiedUser
     } catch (error) {
       console.error('User verification failed:', error)
-      this.error(new Error('Authentication failed'))
+      this.error(new Error('Authentication failed', { cause: error }))
       return null
     }
   }

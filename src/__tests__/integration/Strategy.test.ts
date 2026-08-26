@@ -363,6 +363,16 @@ describe('MagicLinkStrategy - Integration Tests', () => {
     })
 
     describe('error handling throughout flow', () => {
+      // Keep the test output clean
+      let spy: jest.Spied<typeof console.error>
+      beforeEach(() => {
+        spy = jest.spyOn(console, 'error').mockImplementation(() => {})
+      })
+
+      afterEach(() => {
+        spy.mockRestore()
+      })
+
       it('should handle user verification failure in request phase', async () => {
         verifyUser.mockResolvedValueOnce(null)
         const strategy = makeStrategy({ verifyUserAfterToken: false })
@@ -374,6 +384,29 @@ describe('MagicLinkStrategy - Integration Tests', () => {
         )
 
         expect(challenge).toBe('No user found')
+        expect(sendToken).not.toHaveBeenCalled()
+      })
+
+      it('should retain user verification errors in request phase', async () => {
+        const strategy = makeStrategy({ verifyUserAfterToken: false })
+        verifyUser.mockImplementationOnce(() => {
+          throw new Error('User is not a member of any accounts')
+        })
+
+        const error = await testStrategyFailure(
+          strategy,
+          setupRequest(testUsers.valid),
+          { action: 'requestToken' }
+        ).then(
+          () => {
+            throw new Error('expected strategy to reject but it resolved')
+          },
+          e => e
+        )
+
+        expect(error.message).toBe('Authentication failed')
+        expect(error.cause).toBeInstanceOf(Error)
+        expect(error.cause.message).toBe('User is not a member of any accounts')
         expect(sendToken).not.toHaveBeenCalled()
       })
 
@@ -414,6 +447,29 @@ describe('MagicLinkStrategy - Integration Tests', () => {
         )
 
         expect(challenge).toBe('No user found')
+      })
+
+      it('should retain user verification errors in accept phase when verifyUserAfterToken=true', async () => {
+        const strategy = makeStrategy({ verifyUserAfterToken: true })
+        const validToken = createValidToken(testUsers.valid)
+        verifyUser.mockImplementationOnce(() => {
+          throw new Error('User is not a member of any accounts')
+        })
+
+        const error = await testStrategyFailure(
+          strategy,
+          setupRequest({ token: validToken }),
+          { action: 'acceptToken' }
+        ).then(
+          () => {
+            throw new Error('expected strategy to reject but it resolved')
+          },
+          e => e
+        )
+
+        expect(error.message).toBe('Authentication failed')
+        expect(error.cause).toBeInstanceOf(Error)
+        expect(error.cause.message).toBe('User is not a member of any accounts')
       })
     })
 
@@ -522,7 +578,11 @@ describe('MagicLinkStrategy - Integration Tests', () => {
         },
         ...overrides
       }
-      return createTestStrategy(options as Partial<MagicLinkOptions>, sendToken, verifyUser)
+      return createTestStrategy(
+        options as Partial<MagicLinkOptions>,
+        sendToken,
+        verifyUser
+      )
     }
 
     it('should complete full authentication cycle with custom token functions', async () => {
@@ -564,11 +624,9 @@ describe('MagicLinkStrategy - Integration Tests', () => {
 
       const token = getCapturedToken()!
 
-      await testStrategySuccess(
-        strategy,
-        setupRequest({ token }),
-        { action: 'acceptToken' }
-      )
+      await testStrategySuccess(strategy, setupRequest({ token }), {
+        action: 'acceptToken'
+      })
 
       // Second use should fail
       const { challenge } = await testStrategyFailure(
