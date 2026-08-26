@@ -12,6 +12,7 @@ import {
   MockVerifyUser
 } from '../support/mockFactories.js'
 import {
+  createExpiredToken,
   createTestStrategy,
   createValidToken,
   testStrategyError,
@@ -160,6 +161,15 @@ describe('MagicLinkStrategy - Integration Tests', () => {
     })
 
     describe('custom messages', () => {
+      let spy: jest.Spied<typeof console.error>
+      beforeEach(() => {
+        spy = jest.spyOn(console, 'error').mockImplementation(() => {})
+      })
+
+      afterEach(() => {
+        spy.mockRestore()
+      })
+
       it('should use custom tokenAlreadyUsedMessage', async () => {
         const storage = new MemoryStorage()
         const strategy = makeStrategy({ storage, verifyUserAfterToken: true })
@@ -199,6 +209,40 @@ describe('MagicLinkStrategy - Integration Tests', () => {
           strategy,
           setupRequest({ token: validToken }),
           { action: 'acceptToken', authMessage: customMessage }
+        )
+
+        expect(challenge).toBe(customMessage)
+      })
+
+      it('should use custom tokenExpiredMessage', async () => {
+        const storage = new MemoryStorage()
+        const strategy = makeStrategy({ storage })
+        const customMessage =
+          'This magic link has expired. Please request a new one.'
+
+        const expiredToken = createExpiredToken(testUsers.valid, 'top-secret')
+
+        const { challenge } = await testStrategyFailure(
+          strategy,
+          setupRequest({ token: expiredToken }),
+          { action: 'acceptToken', tokenExpiredMessage: customMessage }
+        )
+
+        expect(challenge).toBe(customMessage)
+      })
+
+      it('should use custom tokenInvalidMessage', async () => {
+        const storage = new MemoryStorage()
+        const strategy = makeStrategy({ storage })
+        const customMessage =
+          'This magic link is invalid. Please request a new one.'
+
+        const invalidToken = 'invalidToken'
+
+        const { challenge } = await testStrategyFailure(
+          strategy,
+          setupRequest({ token: invalidToken }),
+          { action: 'acceptToken', tokenInvalidMessage: customMessage }
         )
 
         expect(challenge).toBe(customMessage)

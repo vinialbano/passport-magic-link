@@ -68,6 +68,8 @@ export interface MagicLinkAuthenticateOptions {
   allowReuse?: boolean
   userPrimaryKey?: string
   tokenAlreadyUsedMessage?: string
+  tokenExpiredMessage?: string
+  tokenInvalidMessage?: string
 }
 
 declare module 'passport' {
@@ -96,6 +98,14 @@ type VerifyUserCallbackWithReq = (
   userFields: Record<string, unknown>
 ) => Promise<User | null>
 export type VerifyUser = VerifyUserCallback | VerifyUserCallbackWithReq
+
+/**
+ * Token verification error shape, as thrown by verifyTokenFn
+ */
+type TokenVerificationError = {
+  name?: unknown
+  expiredAt?: unknown
+}
 
 // Configuration validation constants
 const DEFAULT_TTL_SECONDS = 600 // 10 minutes
@@ -141,6 +151,20 @@ function validateSecret(value: string): string {
     throw new Error('Secret cannot be empty')
   }
   return value
+}
+
+/**
+ * Returns true if a verification error was caused by an expired token,
+ * covering jsonwebtoken (TokenExpiredError, expiredAt) and jose (JWTExpired)
+ */
+function isExpiredTokenError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false
+
+  const { name, expiredAt } = error as TokenVerificationError
+
+  return (
+    name === 'TokenExpiredError' || name === 'JWTExpired' || expiredAt != null
+  )
 }
 
 /**
@@ -419,7 +443,7 @@ export class MagicLinkStrategy extends Strategy {
     const tokenString = this.extractToken(req)
     if (!tokenString) return
 
-    const verificationResult = await this.verifyJwtToken(tokenString)
+    const verificationResult = await this.verifyJwtToken(tokenString, options)
     if (!verificationResult) return
 
     const { user: initialUser, tokenExpiration } = verificationResult
@@ -467,7 +491,8 @@ export class MagicLinkStrategy extends Strategy {
    * Verify JWT token and extract payload
    */
   private async verifyJwtToken(
-    tokenString: string
+    tokenString: string,
+    options: MagicLinkAuthenticateOptions
   ): Promise<{ user: User; tokenExpiration: number } | null> {
     try {
       const payload = await this.verifyTokenFn(tokenString)
@@ -478,7 +503,13 @@ export class MagicLinkStrategy extends Strategy {
       }
     } catch (error) {
       console.error('Token verification failed:', error)
-      this.fail('Invalid token', 401)
+
+      const message = isExpiredTokenError(error)
+        ? options.tokenExpiredMessage
+        : options.tokenInvalidMessage
+
+      this.fail(message ?? 'Invalid token', 401)
+
       return null
     }
   }
